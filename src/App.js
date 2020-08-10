@@ -1,69 +1,82 @@
 import React from 'react';
 import './App.css';
+import Cookies from 'universal-cookie';
 
 
 
 class App extends React.Component {
   constructor() {
     super();
-    var tables = [{
-      "name": "Sanjay",
-      "rollNo": 108
-    },
-    {
-      "name": "Developer",
-      "rollNo": 7
-    }];
-    this.state = { table: tables, temp: ["", ""] };
+    this.cookies = new Cookies();
+    //console.log("Hello: "+this.cookies.get('tasks'));
+    let tCookies = this.cookies.get('tasks');
+    var tables = tCookies;
+
+    if (!Array.isArray(tCookies)) {
+      console.log("Undefines");
+      tables = [{
+        "task": "Sanjay"
+      },
+      {
+        "task": "Developer"
+      }];
+    }
+
+    this.cookies.set('tasks', tables, { path: '/' });
+
+    this.state = { table: tables, temp: "" };
+    console.log(this.state.table);
   }
 
   del = (id) => {
     var tables = this.state.table;
     tables.splice(id, 1);
     this.setState({ table: tables });
+    this.cookies.set('tasks', tables, { path: '/' });
   }
 
   edit = (id) => {
     var tables = this.state.table;
-    
-    var temps = [tables[id].rollNo, tables[id].name];
+
+    var temps = tables[id].task;
 
     this.setState({ temp: temps });
   }
 
   add = () => {
-    var name_t = this.state.temp[1];
-    var roll_t = this.state.temp[0];
-    if(name_t==="" || roll_t === "") {
+    var tasks = this.state.temp;
+    if (tasks === "") {
       return;
     }
     var tables = this.state.table;
-    tables.push({ name: name_t, rollNo: roll_t });
-    this.setState({ table: tables, temp: ["", ""] });
+    tables.push({ task: tasks });
+    this.setState({ table: tables, temp: "" });
+    this.cookies.set('tasks', tables, { path: '/' });
   }
 
   handle = (event) => {
-    var temps = this.state.temp;
-    if (event.target.id === "roll_t") {
-      temps[0] = event.target.value;
-    } else {
-      temps[1] = event.target.value;
-    }
-    this.setState({ temp: temps });
+    this.setState({ temp: event.target.value });
   }
 
   save = (event) => {
     var id = parseInt(event.target.id);
     var tables = this.state.table;
     var temps = this.state.temp;
-    if(temps[0]==="" || temps[1] === "") {
+    if (temps === "") {
       return;
     }
     // console.log(id);
-    tables[id].name = temps[1];
-    tables[id].rollNo = temps[0];
+    tables[id].task = temps;
 
-    this.setState({ table: tables, temp: ["", ""] });
+    this.setState({ table: tables, temp: "" });
+    this.cookies.set('tasks', tables, { path: '/' });
+  }
+  handleKeypress = e => {
+
+    if (e.charCode === 13) {
+      this.add();
+
+    }
   }
 
   render() {
@@ -75,8 +88,7 @@ class App extends React.Component {
           <table border="1">
             <thead>
               <tr>
-                <th>Name</th>
-                <th>RollNo</th>
+                <th>Task</th>
                 <th>Edit</th>
                 <th>Delete</th>
               </tr>
@@ -84,8 +96,7 @@ class App extends React.Component {
             <tbody>
               {this.state.table.map((tables, id) => (
                 <tr key={id}>
-                  <td>{tables.name}</td>
-                  <td>{tables.rollNo}</td>
+                  <td>{tables.task}</td>
                   <td><button value={id} onClick={e => this.edit(id)} className="btn btn-orange" id={id + "_edit"}>Edit</button><button value={id} onClick={this.save} className="btn btn-green" id={id + "_save"}>Save</button></td>
                   <td><button value={id} onClick={e => this.del(id)} className="btn btn-red" id={id + "_del"}>Delete</button></td>
                 </tr>
@@ -95,8 +106,7 @@ class App extends React.Component {
         </header>
         <header className="Header">
           <div className="form">
-            <input onChange={this.handle} placeholder="Roll No" value={this.state.temp[0]} className="inline" type="text" id="roll_t" />
-            <input onChange={this.handle} placeholder="Name" value={this.state.temp[1]} className="inline" type="text" id="name_t" />
+            <input onKeyPress={this.handleKeypress} onChange={this.handle} placeholder="Tasks" value={this.state.temp} className="inline" type="text" id="name_t" />
             <button onClick={this.add} className="btn btn-add">Add</button>
           </div>
         </header>
